@@ -33,7 +33,7 @@ namespace MicroRabbitMQ.Infra.Bus
             return _mediator.Send(command);
         }
 
-        public void Publish<T>(T @event) where T : Command
+        public void Publish<T>(T @event) where T : Event
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
             using(var connection = factory.CreateConnection()) 
@@ -95,6 +95,41 @@ namespace MicroRabbitMQ.Infra.Bus
             consumer.Received += Consumer_Received;  // delegate, which will kick off when a message is received
 
             channel.BasicConsume(eventName, true, consumer);
+        }
+
+        private async Task Consumer_Received(object sender, BasicDeliverEventArgs @event)
+        {
+            var eventName = @event.RoutingKey;
+            var message = Encoding.UTF8.GetString(@event.Body.ToArray());
+
+            try
+            {
+                await ProcessEvent(eventName, message).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        private async Task ProcessEvent(string eventName, string message)
+        {
+            if (_handlers.ContainsKey(eventName))
+            {
+                var subscriptions = _handlers[eventName];
+                foreach(var subscription in subscriptions)
+                {
+                    var handler = Activator.CreateInstance(subscription);
+                    if (handler == null) continue;
+                    
+                    var evenType = _eventTypes.SingleOrDefault(t => t.Name ==  eventName);
+                    var @event = JsonConvert.DeserializeObject(message, evenType);
+                    var concreteType = typeof(IEventHandler<>).MakeGenericType(evenType);
+
+                    // In the concrete class call the Handle method passing @event as parameter
+                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { @event });
+                }
+            }
         }
     }
 }
