@@ -10,7 +10,7 @@ namespace MicroRabbitMQ.Banking.Domain.Models
     {
         public int Id { get; set; }
         public string AccountType { get; set; }
-        public double AccountBalance { get; set; }
+        public decimal AccountBalance { get; set; }
 
     }
 }
