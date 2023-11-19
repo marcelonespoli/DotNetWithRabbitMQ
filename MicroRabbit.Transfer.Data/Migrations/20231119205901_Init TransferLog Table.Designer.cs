@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MicroRabbit.Transfer.Data.Migrations
 {
     [DbContext(typeof(TransferDbContext))]
-    [Migration("20231118184555_Initial Migration")]
-    partial class InitialMigration
+    [Migration("20231119205901_Init TransferLog Table")]
+    partial class InitTransferLogTable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -31,13 +31,11 @@ namespace MicroRabbit.Transfer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("AccountFrom")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("FromAccount")
+                        .HasColumnType("int");
 
-                    b.Property<string>("AccountTo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ToAccount")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TransferAmount")
                         .HasColumnType("decimal(18,2)");

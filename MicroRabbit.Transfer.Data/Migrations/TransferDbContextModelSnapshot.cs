@@ -29,13 +29,11 @@ namespace MicroRabbit.Transfer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("AccountFrom")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("FromAccount")
+                        .HasColumnType("int");
 
-                    b.Property<string>("AccountTo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ToAccount")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TransferAmount")
                         .HasColumnType("decimal(18,2)");

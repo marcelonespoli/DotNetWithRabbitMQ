@@ -4,7 +4,7 @@
 
 namespace MicroRabbit.Transfer.Data.Migrations
 {
-    public partial class InitialMigration : Migration
+    public partial class InitTransferLogTable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,8 +14,8 @@ namespace MicroRabbit.Transfer.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    AccountFrom = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AccountTo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FromAccount = table.Column<int>(type: "int", nullable: false),
+                    ToAccount = table.Column<int>(type: "int", nullable: false),
                     TransferAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>

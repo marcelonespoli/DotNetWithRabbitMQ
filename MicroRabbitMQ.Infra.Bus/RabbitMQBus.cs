@@ -2,16 +2,11 @@
 using MicroRabbitMQ.Domain.Core.Bus;
 using MicroRabbitMQ.Domain.Core.Commands;
 using MicroRabbitMQ.Domain.Core.Events;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace MicroRabbitMQ.Infra.Bus
 {
@@ -20,10 +15,12 @@ namespace MicroRabbitMQ.Infra.Bus
         private readonly IMediator _mediator;
         private readonly Dictionary<string, List<Type>> _handlers;
         private readonly List<Type> _eventTypes;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public RabbitMQBus(IMediator mediator)
+        public RabbitMQBus(IMediator mediator, IServiceScopeFactory serviceScopeFactory)
         {
             _mediator = mediator;
+            _serviceScopeFactory = serviceScopeFactory;
             _handlers = new Dictionary<string, List<Type>>();
             _eventTypes = new List<Type>();
         }
@@ -111,25 +108,49 @@ namespace MicroRabbitMQ.Infra.Bus
                 throw;
             }
         }
-
         private async Task ProcessEvent(string eventName, string message)
         {
             if (_handlers.ContainsKey(eventName))
             {
-                var subscriptions = _handlers[eventName];
-                foreach(var subscription in subscriptions)
+                using (var scope = _serviceScopeFactory.CreateScope())
                 {
-                    var handler = Activator.CreateInstance(subscription);
-                    if (handler == null) continue;
-                    
-                    var evenType = _eventTypes.SingleOrDefault(t => t.Name ==  eventName);
-                    var @event = JsonConvert.DeserializeObject(message, evenType);
-                    var concreteType = typeof(IEventHandler<>).MakeGenericType(evenType);
+                    var subscriptions = _handlers[eventName];
+                    foreach (var subscription in subscriptions)
+                    {
+                        var handler = scope.ServiceProvider.GetService(subscription);
+                        if (handler == null) continue;
 
-                    // In the concrete class call the Handle method passing @event as parameter
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { @event });
+                        var evenType = _eventTypes.SingleOrDefault(t => t.Name == eventName);
+                        var @event = JsonConvert.DeserializeObject(message, evenType);
+                        var concreteType = typeof(IEventHandler<>).MakeGenericType(evenType);
+
+                        // In the concrete class call the Handle method passing @event as parameter
+                        await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { @event });
+                    }
                 }
             }
         }
+
+        // before refactory and use of scope
+        //private async Task ProcessEvent(string eventName, string message)
+        //{
+        //    if (_handlers.ContainsKey(eventName))
+        //    {
+        //        var subscriptions = _handlers[eventName];
+        //        foreach (var subscription in subscriptions)
+        //        {
+        //            var handler = Activator.CreateInstance(subscription);
+        //            if (handler == null) continue;
+
+        //            var evenType = _eventTypes.SingleOrDefault(t => t.Name == eventName);
+        //            var @event = JsonConvert.DeserializeObject(message, evenType);
+        //            var concreteType = typeof(IEventHandler<>).MakeGenericType(evenType);
+
+        //            // In the concrete class call the Handle method passing @event as parameter
+        //            await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { @event });
+        //        }
+        //    }
+        //}
+
     }
 }
