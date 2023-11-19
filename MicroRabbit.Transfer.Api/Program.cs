@@ -1,4 +1,7 @@
 using MicroRabbit.Transfer.Data.Context;
+using MicroRabbit.Transfer.Domain.EventHandlers;
+using MicroRabbit.Transfer.Domain.Events;
+using MicroRabbitMQ.Domain.Core.Bus;
 using MicroRabbitMQ.Infra.IoC;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -46,4 +49,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+ConfigureEventBus(app);
+
 app.Run();
+
+
+
+void ConfigureEventBus(IApplicationBuilder app)
+{
+    var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+    eventBus.Subscribe<TransferCreatedEvent, TransferEventHandler>();
+}

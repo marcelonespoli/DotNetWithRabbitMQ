@@ -12,6 +12,9 @@ namespace MicroRabbit.Transfer.Domain.EventHandlers
 
         public Task Handle(TransferCreatedEvent @event)
         {
+            // her we can do calculations
+            // talk to another Api or servie
+            // save data in teh database
 
             return Task.CompletedTask;
         }
